@@ -116,6 +116,9 @@ def find_corrupt_pkgs(vdb_path, verbose=True):
                 print("Skipping {0}".format(full_path))
             continue
 
+        if "-MERGING-" in cpf.name:
+            continue
+
         if ".portage_lockfile" in full_path.parts[-1]:
             continue
 
