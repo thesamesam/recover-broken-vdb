@@ -198,7 +198,7 @@ def fix_vdb(vdb_path, filesystem, pkg, verbose=True):
 
         contents = " ".join(pkg.dyn_paths)
 
-        subprocess.run(["bash", "scanelf.sh", tmpdir, contents])
+        subprocess.run(["recover-broken-vdb-scanelf.sh", tmpdir, contents])
 
         if not (tmpdir_path / 'build-info' / 'NEEDED').exists():
             # Not an interesting binary.
