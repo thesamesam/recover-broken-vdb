@@ -8,11 +8,6 @@ files=${@:2}
 mkdir -p ${output}/build-info
 
 # Nabbed from Portage's bin/misc-functions.sh (install_qa_check)
-#echo ${files}
-#for file in ${files} ; do
-#       echo "file: ${file}"
-#done
-
 scanelf -yRBF '%a;%p;%S;%r;%n' ${files} | { while IFS= read -r l; do
         arch=${l%%;*}; l=${l#*;}
         obj="${l%%;*}"; l=${l#*;}
