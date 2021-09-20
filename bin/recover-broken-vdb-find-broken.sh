@@ -1,9 +1,23 @@
 #!/bin/bash
-# Identify packages that provide .so files but are missing a PROVIDES file
+# Identify packages in the VDB that provide .so files but are missing an
+# expected PROVIDES or NEEDED* file.
 
-declare -a pkgs
+die()
+{
+  echo "$@" >&2
+  exit 1
+}
 
-cd /var/db/pkg && for A in */*/CONTENTS ; do
+# Sanity check.
+declare -a pkgs || die "Declaring array failed, old bash? Cannot continue."
+
+# Let stderr bleed through, if any.
+vdb_path=$(portageq vdb_path)
+test -n "$vdb_path" || die "Could not determine vdb_path. Cannot continue."
+
+cd "$vdb_path" || die "Could not chdir vdb_path ($vdb_path). Cannot continue."
+
+for A in */*/CONTENTS ; do
     # Iterate over all .sos they install
     for O in $(sed -n -E 's%^obj (/[^ ]+\.so( |\.[^ ]+)).*%\1%p' $A | sed 's/ $//') ; do
         SHARED=$(file "$O" | egrep 'shared object')
