@@ -154,6 +154,16 @@ def find_corrupt_pkgs(vdb_path, verbose=True):
                 if manpage:
                     continue
 
+                # If we've got to this point, it's _probably_ a shared
+                # library, but we can't be sure.
+                # TODO: We could batch this all at once and call file
+                # on all the .so-ish paths installed by a package.
+                file_exec = subprocess.run(["file", installed_path], stdout=subprocess.PIPE)
+                if "SB shared object" not in file_exec.stdout.decode('utf-8'):
+                    if verbose:
+                        print("Skipping {0}'s {1} because file says not a shared library".format(str(cpf), installed_path))
+                    continue
+
                 # Don't spam about the same broken package repeatedly
                 if not broken_package:
                     broken_package = BrokenPackage(cpf)
