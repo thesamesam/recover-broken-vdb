@@ -1,0 +1,13 @@
+0.0.2 (2021-09-21)
+----
+- recover-broken-vdb: avoid false positives by using file(1) on candidate
+  possible libraries
+- recover-broken-vdb-find-broken.sh: fix output when no issues found
+- recover-broken-vdb-find-broken.sh: better error handling, more documentation
+
+0.0.1 (2021-09-20)
+----
+
+Initial release.
+
+
