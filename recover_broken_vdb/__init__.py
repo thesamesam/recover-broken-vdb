@@ -11,23 +11,24 @@ from portage.util._dyn_libs.soname_deps import SonameDepsProcessor
 
 # Nabbed from Portage's LinkageMapELF
 _approx_multilib_categories = {
-        "386":           "x86_32",
-        "68K":           "m68k_32",
-        "AARCH64":       "arm_64",
-        "ALPHA":         "alpha_64",
-        "ARM":           "arm_32",
-        "IA_64":         "ia64_64",
-        "MIPS":          "mips_o32",
-        "PARISC":        "hppa_64",
-        "PPC":           "ppc_32",
-        "PPC64":         "ppc_64",
-        "S390":          "s390_64",
-        "SH":            "sh_32",
-        "SPARC":         "sparc_32",
-        "SPARC32PLUS":   "sparc_32",
-        "SPARCV9":       "sparc_64",
-        "X86_64":        "x86_64",
+    "386": "x86_32",
+    "68K": "m68k_32",
+    "AARCH64": "arm_64",
+    "ALPHA": "alpha_64",
+    "ARM": "arm_32",
+    "IA_64": "ia64_64",
+    "MIPS": "mips_o32",
+    "PARISC": "hppa_64",
+    "PPC": "ppc_32",
+    "PPC64": "ppc_64",
+    "S390": "s390_64",
+    "SH": "sh_32",
+    "SPARC": "sparc_32",
+    "SPARC32PLUS": "sparc_32",
+    "SPARCV9": "sparc_64",
+    "X86_64": "x86_64",
 }
+
 
 class BrokenPackage:
     """
@@ -77,12 +78,16 @@ class ModelFileSystem:
             # e.g. /var/db/pkg/dev-perl/XML-Parser -> dev-perl/XML-Parser
             # and prefix with the temporary directory location
             # e.g. dev-perl/XML-Parser -> /tmp/tmp4nwthhg2/dev-perl/XML-Parser
-            original_path = str(pathlib.Path(path)).replace(str(strip).rstrip('/'), str(self.root), 1)
+            original_path = str(pathlib.Path(path)).replace(
+                str(strip).rstrip("/"), str(self.root), 1
+            )
             new_path = pathlib.Path(original_path)
 
             # Quick sanity check!
             if not str(new_path).startswith(str(self.root)):
-                raise RuntimeError("Trying to write with non-prefixed path: {0}!".format(str(new_path)))
+                raise RuntimeError(
+                    "Trying to write with non-prefixed path: {0}!".format(str(new_path))
+                )
 
             # Create the parts above the files we're creating (e.g. NEEDED)
             # e.g. For dev-perl/XML-Parser/NEEDED, create two nested directories
@@ -111,7 +116,7 @@ def find_corrupt_pkgs(vdb_path, verbose=True):
 
         # If they have a PROVIDES entry, skip.
         # They're not affected by the bug we're checking for.
-        if (full_path / 'PROVIDES').exists():
+        if (full_path / "PROVIDES").exists():
             if verbose:
                 print("Skipping {0}".format(full_path))
             continue
@@ -125,7 +130,7 @@ def find_corrupt_pkgs(vdb_path, verbose=True):
         # They have a PROVIDES entry.
         # Let's check if it installs any .sos
         # in CONTENTS.
-        contents = full_path / 'CONTENTS'
+        contents = full_path / "CONTENTS"
         if not contents.exists():
             print("!!! {0} has no CONTENTS file!".format(cpf))
             sys.exit(1)
@@ -147,10 +152,10 @@ def find_corrupt_pkgs(vdb_path, verbose=True):
 
             # Be careful to match:
             #
-            match = re.match('.*\.so($|\..*)', installed_path)
+            match = re.match(".*\.so($|\..*)", installed_path)
             if match:
                 # Skip false positives on man pages
-                manpage = re.match('^/usr/share/man/', installed_path)
+                manpage = re.match("^/usr/share/man/", installed_path)
                 if manpage:
                     continue
 
@@ -158,10 +163,16 @@ def find_corrupt_pkgs(vdb_path, verbose=True):
                 # library, but we can't be sure.
                 # TODO: We could batch this all at once and call file
                 # on all the .so-ish paths installed by a package.
-                file_exec = subprocess.run(["file", installed_path], stdout=subprocess.PIPE)
-                if "SB shared object" not in file_exec.stdout.decode('utf-8'):
+                file_exec = subprocess.run(
+                    ["file", installed_path], stdout=subprocess.PIPE
+                )
+                if "SB shared object" not in file_exec.stdout.decode("utf-8"):
                     if verbose:
-                        print("Skipping {0}'s {1} because file says not a shared library".format(str(cpf), installed_path))
+                        print(
+                            "Skipping {0}'s {1} because file says not a shared library".format(
+                                str(cpf), installed_path
+                            )
+                        )
                     continue
 
                 # Don't spam about the same broken package repeatedly
@@ -169,8 +180,10 @@ def find_corrupt_pkgs(vdb_path, verbose=True):
                     broken_package = BrokenPackage(cpf)
                     broken_packages.append(broken_package)
                     print(
-                        "!!! {0} installed a dynamic library with no PROVIDES!"
-                        .format(cpf))
+                        "!!! {0} installed a dynamic library with no PROVIDES!".format(
+                            cpf
+                        )
+                    )
 
                 broken_package.dyn_paths.append(installed_path)
 
@@ -181,7 +194,7 @@ def find_corrupt_pkgs(vdb_path, verbose=True):
 
 
 def fix_vdb(vdb_path, filesystem, pkg, verbose=True):
-    '''
+    """
     Creates PROVIDES, REQUIRES, NEEDED, and NEEDED.ELF.2 for a package in
     Portage's VDB.
 
@@ -190,13 +203,14 @@ def fix_vdb(vdb_path, filesystem, pkg, verbose=True):
             pretend (bool): Pretend or modify the live filesystem
 
     Inspired by lib/portage/tests/util/dyn_libs/test_soname_deps.py
-    '''
+    """
     print(">>> Fixing VDB for {0}".format(pkg))
 
-    if (vdb_path / pkg.cpf / 'NEEDED').exists():
+    if (vdb_path / pkg.cpf / "NEEDED").exists():
         # It's not clear what kind of situation would lead to this happening.
         raise NotImplementedError(
-            "No support for where NEEDED exists but PROVIDES doesn't")
+            "No support for where NEEDED exists but PROVIDES doesn't"
+        )
 
     corrected_vdb = {}
 
@@ -210,17 +224,18 @@ def fix_vdb(vdb_path, filesystem, pkg, verbose=True):
 
         subprocess.run(["recover-broken-vdb-scanelf.sh", tmpdir, contents])
 
-        if not (tmpdir_path / 'build-info' / 'NEEDED').exists():
+        if not (tmpdir_path / "build-info" / "NEEDED").exists():
             # Not an interesting binary.
             print(">>> Nothing to fix for {0}, blank NEEDED".format(pkg))
             return
 
         for component in ["NEEDED", "NEEDED.ELF.2"]:
             corrected_vdb[component] = (
-                tmpdir_path / 'build-info' / component).read_text()
+                tmpdir_path / "build-info" / component
+            ).read_text()
 
     # 2) We now generate PROVIDES, REQUIRES
-    soname_deps = SonameDepsProcessor('', '')
+    soname_deps = SonameDepsProcessor("", "")
     for line in corrected_vdb["NEEDED.ELF.2"].split("\n"):
         if not line:
             continue
@@ -235,47 +250,60 @@ def fix_vdb(vdb_path, filesystem, pkg, verbose=True):
         # a value to use.
         if needed.multilib_category is None:
             needed.multilib_category = _approx_multilib_categories.get(
-                        needed.arch, needed.arch)
+                needed.arch, needed.arch
+            )
 
         soname_deps.add(needed)
 
     corrected_vdb["PROVIDES"] = soname_deps.provides
     corrected_vdb["REQUIRES"] = soname_deps.requires
 
-    prefix = vdb_path + '/' + str(pkg)
+    prefix = vdb_path + "/" + str(pkg)
 
     for entry in ["NEEDED", "NEEDED.ELF.2", "PROVIDES", "REQUIRES"]:
         if verbose:
-            print("File: {0}".format(entry.lstrip('/')))
+            print("File: {0}".format(entry.lstrip("/")))
             print("Value: {0}".format(corrected_vdb[entry]))
 
-        filesystem.add(prefix + '/' + entry.lstrip('/'), corrected_vdb[entry], strip=vdb_path)
+        filesystem.add(
+            prefix + "/" + entry.lstrip("/"), corrected_vdb[entry], strip=vdb_path
+        )
 
     print(">>> Generated fixed VDB files for {0}".format(pkg))
     print()
 
+
 def start():
-	parser = argparse.ArgumentParser(description="Tool to analyse Portage's VDB "
-                                 "and check for ELF-metadata corruption.")
-	parser.add_argument('--verbose',
-                    action="store_true",
-                    help='List contents of each file we want to write')
-	parser.add_argument('--vdb', type=str, default="/var/db/pkg",
-                    help="Path to Portage's VDB")
-	parser.add_argument('--output',
-                    type=str, help='Location to write fixed VDB files to (default is a temporary directory)')
-	args = parser.parse_args()
+    parser = argparse.ArgumentParser(
+        description="Tool to analyse Portage's VDB "
+        "and check for ELF-metadata corruption."
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="List contents of each file we want to write",
+    )
+    parser.add_argument(
+        "--vdb", type=str, default="/var/db/pkg", help="Path to Portage's VDB"
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        help="Location to write fixed VDB files to (default is a temporary directory)",
+    )
+    args = parser.parse_args()
 
-	corrupt_pkgs = find_corrupt_pkgs(args.vdb, args.verbose)
-	filesystem = ModelFileSystem(args.output)
+    corrupt_pkgs = find_corrupt_pkgs(args.vdb, args.verbose)
+    filesystem = ModelFileSystem(args.output)
 
-	print()
-	print(">> Writing to output directory: {0}".format(filesystem.root))
+    print()
+    print(">> Writing to output directory: {0}".format(filesystem.root))
 
-	for package in corrupt_pkgs:
-	    fix_vdb(args.vdb, filesystem, package, args.verbose)
+    for package in corrupt_pkgs:
+        fix_vdb(args.vdb, filesystem, package, args.verbose)
 
-	print(">>> Written to output directory: {0}".format(filesystem.root))
+    print(">>> Written to output directory: {0}".format(filesystem.root))
+
 
 if __name__ == "__main__":
-	start()
+    start()
