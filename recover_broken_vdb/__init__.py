@@ -160,8 +160,8 @@ def find_corrupt_pkgs(vdb_path, verbose=True):
                 continue
 
             # Skip false positives where possible
-            manpage = re.match("^/usr/(share|include)/", installed_path)
-            if manpage:
+            ignore_path = re.match("^/usr/(share|include)/", installed_path)
+            if ignore_path:
                 continue
 
             # TODO: We could batch this all at once and call file
@@ -175,7 +175,7 @@ def find_corrupt_pkgs(vdb_path, verbose=True):
             ):
                 if verbose:
                     print(
-                        "Skipping {0}'s {1} because file says not a shared library".format(
+                        "Skipping {0}'s {1} because file says not a shared library or dyn. linked executable".format(
                             str(cpf), installed_path
                         )
                     )
