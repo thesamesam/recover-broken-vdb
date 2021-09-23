@@ -166,7 +166,9 @@ def find_corrupt_pkgs(vdb_path, verbose=True):
 
             # TODO: We could batch this all at once and call file
             # on all the .so-ish paths installed by a package.
-            file_exec = subprocess.run(["file", installed_path], stdout=subprocess.PIPE)
+            file_exec = subprocess.run(
+                ["file", "-b", installed_path], stdout=subprocess.PIPE
+            )
             file_exec_result = file_exec.stdout.decode("utf-8")
 
             if (
