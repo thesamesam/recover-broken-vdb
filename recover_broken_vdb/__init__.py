@@ -166,7 +166,12 @@ def find_corrupt_pkgs(vdb_path, verbose=True):
                 file_exec = subprocess.run(
                     ["file", installed_path], stdout=subprocess.PIPE
                 )
-                if "SB shared object" not in file_exec.stdout.decode("utf-8"):
+                file_exec_result = file_exec.stdout.decode("utf-8")
+
+                if (
+                    "SB shared object" not in file_exec_result
+                    and "dynamically linked" not in file_exec_result
+                ):
                     if verbose:
                         print(
                             "Skipping {0}'s {1} because file says not a shared library".format(
