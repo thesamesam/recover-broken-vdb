@@ -1,3 +1,9 @@
+0.0.3 (2021-09-23)
+----
+- recover-broken-vdb: don't skip dynamically linked executables
+- recover-broken-vdb: don't skip packages with purely dynamically linked
+  executables either
+
 0.0.2 (2021-09-21)
 ----
 - recover-broken-vdb: avoid false positives by using file(1) on candidate
