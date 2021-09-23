@@ -150,47 +150,51 @@ def find_corrupt_pkgs(vdb_path, verbose=True):
             # Convert the residue into something useful
             installed_path = residue.split(" ")[0]
 
-            # Be careful to match:
-            #
             match = re.match(".*\.so($|\..*)", installed_path)
-            if match:
-                # Skip false positives on man pages
-                manpage = re.match("^/usr/share/man/", installed_path)
-                if manpage:
-                    continue
 
-                # If we've got to this point, it's _probably_ a shared
-                # library, but we can't be sure.
-                # TODO: We could batch this all at once and call file
-                # on all the .so-ish paths installed by a package.
-                file_exec = subprocess.run(
-                    ["file", installed_path], stdout=subprocess.PIPE
-                )
-                file_exec_result = file_exec.stdout.decode("utf-8")
+            # If it's not .so-like, we'll still consider it if there's *bin* or *libexec*
+            # in the path, to allow for packages which only install executables.
+            if not match and (
+                "bin" not in installed_path and "libexec" not in installed_path
+            ):
+                continue
 
-                if (
-                    "SB shared object" not in file_exec_result
-                    and "dynamically linked" not in file_exec_result
-                ):
-                    if verbose:
-                        print(
-                            "Skipping {0}'s {1} because file says not a shared library".format(
-                                str(cpf), installed_path
-                            )
-                        )
-                    continue
+            # Skip false positives where possible
+            manpage = re.match("^/usr/(share|include)/", installed_path)
+            if manpage:
+                continue
 
-                # Don't spam about the same broken package repeatedly
-                if not broken_package:
-                    broken_package = BrokenPackage(cpf)
-                    broken_packages.append(broken_package)
+            # TODO: We could batch this all at once and call file
+            # on all the .so-ish paths installed by a package.
+            file_exec = subprocess.run(["file", installed_path], stdout=subprocess.PIPE)
+            file_exec_result = file_exec.stdout.decode("utf-8")
+
+            if (
+                "ELF" not in file_exec_result
+                or "dynamically linked" not in file_exec_result
+            ):
+                if verbose:
                     print(
-                        "!!! {0} installed a dynamic library with no PROVIDES!".format(
+                        "Skipping {0}'s {1} because file says not a shared library".format(
+                            str(cpf), installed_path
+                        )
+                    )
+                continue
+
+            # Don't spam about the same broken package repeatedly
+            if not broken_package:
+                broken_package = BrokenPackage(cpf)
+                broken_packages.append(broken_package)
+                if match:
+                    # If they installed a .so-like file, then let's warn about it.
+                    # This isn't important if it's just dynamically linked executables.
+                    print(
+                        "!!! {0} installed a dynamic library (or dyn. linked executable) with no PROVIDES!".format(
                             cpf
                         )
                     )
 
-                broken_package.dyn_paths.append(installed_path)
+            broken_package.dyn_paths.append(installed_path)
 
             if broken_package:
                 broken_package.contents.append(installed_path)
@@ -209,15 +213,27 @@ def fix_vdb(vdb_path, filesystem, pkg, verbose=True):
 
     Inspired by lib/portage/tests/util/dyn_libs/test_soname_deps.py
     """
-    print(">>> Fixing VDB for {0}".format(pkg))
+
+    # Check whether any of the installed paths look .so-like
+    any_so = (
+        len([path for path in pkg.dyn_paths if re.match(".*\.so($|\..*)", path)]) > 0
+    )
 
     if (vdb_path / pkg.cpf / "NEEDED").exists():
-        # It's not clear what kind of situation would lead to this happening.
-        raise NotImplementedError(
-            "No support for where NEEDED exists but PROVIDES doesn't"
-        )
+        # If we're installing any .so-like files, it's mildly
+        # noteworthy if we have NEEDED but not PROVIDES.
+        if any_so:
+            if verbose:
+                print(">>> NEEDED exists but no PROVIDES for {0}".format(pkg))
+
+        # If NEEDED exists and we're just dynamically linked executables
+        # (like sys-apps/sed), there's no point in carrying on either.
+        # But so common that it's not even worth logging about.
+        return
 
     corrected_vdb = {}
+
+    print(">>> Fixing VDB for {0}".format(pkg))
 
     # We have missing PROVIDES, REQUIRES, NEEDED, NEEDED.ELF.2.
     #
@@ -266,6 +282,22 @@ def fix_vdb(vdb_path, filesystem, pkg, verbose=True):
     prefix = vdb_path + "/" + str(pkg)
 
     for entry in ["NEEDED", "NEEDED.ELF.2", "PROVIDES", "REQUIRES"]:
+        if entry == "PROVIDES":
+            # Did we install anything looking like a .so?
+            # If so, we want to ensure PROVIDES isn't blank
+            # (It's fine if we didn't install any .sos, because pkg w/ just dynamically linked executables
+            # usually won't have a PROIVDES, unless FEATURES=splitdebug)
+            if not corrected_vdb[entry]:
+                if any_so:
+                    raise RuntimeError(
+                        "!!! {0} installed dynamic libraries(?) but no PROVIDES generated!".format(
+                            pkg
+                        )
+                    )
+                else:
+                    # Don't try to write it out given no .sos installed
+                    continue
+
         if verbose:
             print("File: {0}".format(entry.lstrip("/")))
             print("Value: {0}".format(corrected_vdb[entry]))
