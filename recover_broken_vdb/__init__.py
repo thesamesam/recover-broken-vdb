@@ -114,9 +114,9 @@ def find_corrupt_pkgs(vdb_path, verbose=True):
         if "virtual/" in str(cpf) or "acct-" in str(cpf):
             continue
 
-        # If they have a PROVIDES entry, skip.
+        # If they have a PROVIDES entry, skip (or NEEDED for non-libs)
         # They're not affected by the bug we're checking for.
-        if (full_path / "PROVIDES").exists():
+        if (full_path / "PROVIDES").exists() or (full_path / "NEEDED").exists():
             if verbose:
                 print("Skipping {0}".format(full_path))
             continue
