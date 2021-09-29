@@ -34,7 +34,7 @@ for A in */*/CONTENTS ; do
             fi
         # If it is a shared library, check that we have NEEDED* and PROVIDES in the VDB
         elif echo "${F}" | egrep -q "ELF .*shared object" ; then
-            if [ ! -f "${CPV}/PROVIDES" -o ! -f "${CPV}/NEEDED" -o ! -f "${CPV}/NEEDED.ELF.2" ]; then
+            if [ ! -f "${CPV}/PROVIDES" -a ! -f "${CPV}/NEEDED" -a ! -f "${CPV}/NEEDED.ELF.2" ]; then
                 # Remember this package with full version suitable for re-emerging
                 pkgs+=("=${CPV}")
             fi
