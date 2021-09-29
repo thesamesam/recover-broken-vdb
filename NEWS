@@ -1,3 +1,7 @@
+0.0.5 (2021-09-29)
+----
+- setup.cfg: fix Python lower bound (https://bugs.gentoo.org/815373)
+
 0.0.4 (2021-09-24)
 ----
 - bin/recover-broken-vdb-find-broken.sh: check for dynamically linked executables
