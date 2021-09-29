@@ -23,7 +23,7 @@
 
 0.0.4 (2021-09-24)
 ----
-- bin/recover-broken-vdb-find-broken.sh: check for dynamically linked executables
+- recover-broken-vdb-find-broken.sh: check for dynamically linked executables
   which are broken too (analogous to the recover-broken-vdb changes in 0.0.3)
 - recover-broken-vdb: skip early if a package has NEEDED (e.g. purely dynamically
   linked)
