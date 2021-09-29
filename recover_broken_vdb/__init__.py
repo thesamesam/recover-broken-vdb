@@ -99,7 +99,7 @@ class ModelFileSystem:
         new_path.write_text(contents)
 
 
-def find_corrupt_pkgs(vdb_path, verbose=True):
+def find_corrupt_pkgs(vdb_path, deep=True, verbose=True):
     broken_packages = []
 
     # Generate a list of paths to check in the VDB
@@ -154,10 +154,15 @@ def find_corrupt_pkgs(vdb_path, verbose=True):
 
             # If it's not .so-like, we'll still consider it if there's *bin* or *libexec*
             # in the path, to allow for packages which only install executables.
-            if not match and (
-                "bin" not in installed_path and "libexec" not in installed_path
-            ):
-                continue
+            if not match:
+                # If --deep is given, examine these paths even if they're unlikely to be
+                # critical.
+                if (
+                    not deep
+                    and "bin" not in installed_path
+                    and "libexec" not in installed_path
+                ):
+                    continue
 
             # Skip false positives where possible
             ignore_path = re.match("^/usr/(share|include)/", installed_path)
@@ -318,6 +323,11 @@ def start():
         "and check for ELF-metadata corruption."
     )
     parser.add_argument(
+        "--deep",
+        action="store_true",
+        help="Rebuild VDB contents for non-critical packages (increases time taken); based on being in a path matching *bin* or *libexec*",
+    )
+    parser.add_argument(
         "--verbose",
         action="store_true",
         help="List contents of each file we want to write",
@@ -332,7 +342,10 @@ def start():
     )
     args = parser.parse_args()
 
-    corrupt_pkgs = find_corrupt_pkgs(args.vdb, args.verbose)
+    if args.deep:
+        print("!!! Running with --deep may significantly increase runtime. Be patient!")
+
+    corrupt_pkgs = find_corrupt_pkgs(args.vdb, args.deep, args.verbose)
     filesystem = ModelFileSystem(args.output)
 
     print()
