@@ -118,7 +118,9 @@ def find_corrupt_pkgs(vdb_path, deep=True, verbose=True):
         # They're not affected by the bug we're checking for.
         if (full_path / "PROVIDES").exists() or (full_path / "NEEDED").exists():
             if verbose:
-                print("Skipping {0}".format(full_path))
+                print(
+                    "Skipping {0} because PROVIDES or NEEDED exists".format(full_path)
+                )
             continue
 
         if "-MERGING-" in cpf.name:
