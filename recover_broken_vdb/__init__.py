@@ -342,6 +342,8 @@ def start():
     )
     args = parser.parse_args()
 
+    print(">>> Scanning system. This may take a few minutes.")
+
     if args.deep:
         print("!!! Running with --deep may significantly increase runtime. Be patient!")
 
@@ -349,12 +351,17 @@ def start():
     filesystem = ModelFileSystem(args.output)
 
     print()
-    print(">> Writing to output directory: {0}".format(filesystem.root))
 
-    for package in corrupt_pkgs:
-        fix_vdb(args.vdb, filesystem, package, args.verbose)
+    if corrupt_pkgs:
+        print(">>> Found {0} packages to fix".format(len(corrupt_pkgs)))
+        print(">>> Writing to output directory: {0}".format(filesystem.root))
 
-    print(">>> Written to output directory: {0}".format(filesystem.root))
+        for package in corrupt_pkgs:
+            fix_vdb(args.vdb, filesystem, package, args.verbose)
+
+        print(">>> Written to output directory: {0}".format(filesystem.root))
+    else:
+        print(">>> No broken packages found!")
 
 
 if __name__ == "__main__":
