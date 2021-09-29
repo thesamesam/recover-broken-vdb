@@ -350,8 +350,6 @@ def start():
     corrupt_pkgs = find_corrupt_pkgs(args.vdb, args.deep, args.verbose)
     filesystem = ModelFileSystem(args.output)
 
-    print()
-
     if corrupt_pkgs:
         print(">>> Found {0} packages to fix".format(len(corrupt_pkgs)))
         print(">>> Writing to output directory: {0}".format(filesystem.root))
