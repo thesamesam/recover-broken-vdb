@@ -348,9 +348,10 @@ def start():
         print("!!! Running with --deep may significantly increase runtime. Be patient!")
 
     corrupt_pkgs = find_corrupt_pkgs(args.vdb, args.deep, args.verbose)
-    filesystem = ModelFileSystem(args.output)
 
     if corrupt_pkgs:
+        filesystem = ModelFileSystem(args.output)
+
         print(">>> Found {0} packages to fix".format(len(corrupt_pkgs)))
         print(">>> Writing to output directory: {0}".format(filesystem.root))
 
