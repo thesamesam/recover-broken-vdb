@@ -1,3 +1,18 @@
+0.0.6 (2021-09-29)
+----
+- recover-broken-vdb: add --deep option to check paths not matching *bin*
+  or *libdir* (and not looking '.so-like') to be more thorough. Files
+  not matching such a condition are unlikely to be critical or needed
+  to bring up the system, but it's good to provide the option. Extends runtime
+  significantly.
+- recover-broken-vdb: be more verbose at a few steps during the process,
+  improve output format.
+- recover-broken-vdb-find-broken.sh: mark non-critical packages (analogous to
+  the above recover-broken-vdb--deep change)
+- recover-broken-vdb-find-broken.sh: match recover-broken-vdb's skip condition
+  if certain VDB metadata exists so we don't flag up false positives with the
+  scan tool that recover-broken-vdb ignores/skips (with "Skipping").
+
 0.0.5 (2021-09-29)
 ----
 - setup.cfg: fix Python lower bound (https://bugs.gentoo.org/815373)
