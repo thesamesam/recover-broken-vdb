@@ -1,4 +1,4 @@
-0.0.7 (2021-??-??)
+0.0.7 (2021-09-29)
 ----
 - recover-broken-vdb: don't create tmpdir unless necessary
 - recover-broken-vdb: make "Skipping" output more verbose
