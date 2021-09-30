@@ -20,7 +20,6 @@ cd "${vdb_path}" || die "Could not chdir vdb_path (${vdb_path}). Cannot continue
 echo "Checking installed packages for inconsistent VDB..."
 for A in */*/CONTENTS ; do
     CPV=$(echo "${A}" | cut -d/ -f1,2)
-    comment=
 
     # Iterate over all potential shared libs or executables they install
     for O in $(sed -n -E 's%^obj (/.*(\.so( |\.[^ ]+)|bin/[^ ]+)).*%\1%p' ${A} | sed 's/ $//') ; do
@@ -28,15 +27,11 @@ for A in */*/CONTENTS ; do
         F=$(file -b "${O}" 2>/dev/null)
         test -n "${F}" || die "Could not run 'file' on '${O}'. Cannot continue."
 
-        if [[ ${F} == *libexec* || ${F} == *bin* ]] ; then
-            comment=" # not likely to be critical, recover tool will skip without --deep"
-        fi
-
         # If it is an executable, check that we have NEEDED* metadata in the VDB
         if echo "${F}" | egrep -q "ELF .*executable.*dynamically linked" ; then
             if [ ! -f "${CPV}/NEEDED" -o ! -f "${CPV}/NEEDED.ELF.2" ] ; then
                 # Remember this package with full version suitable for re-emerging
-                pkgs+=("=${CPV}${comment}")
+                pkgs+=("=${CPV}")
                 # We know this package is broken, move on to the next
                 break
             fi
@@ -44,7 +39,7 @@ for A in */*/CONTENTS ; do
         elif echo "${F}" | egrep -q "ELF .*shared object" ; then
             if [ ! -f "${CPV}/PROVIDES" -a ! -f "${CPV}/NEEDED" -a ! -f "${CPV}/NEEDED.ELF.2" ] ; then
                 # Remember this package with full version suitable for re-emerging
-                pkgs+=("=${CPV}${comment}")
+                pkgs+=("=${CPV}")
             fi
             # We have checked this package thoroughly so we can move on
             break
