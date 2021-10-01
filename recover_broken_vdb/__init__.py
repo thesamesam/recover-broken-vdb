@@ -96,7 +96,12 @@ class ModelFileSystem:
         else:
             new_path = pathlib.Path(path)
 
-        new_path.write_text(contents)
+        if contents:
+            new_path.write_text(contents)
+        else:
+            raise ValueError(
+                "Contents of new file (path={0}) cannot be blank!".format(path)
+            )
 
 
 def find_corrupt_pkgs(vdb_path, deep=True, verbose=True):
@@ -311,9 +316,19 @@ def fix_vdb(vdb_path, filesystem, pkg, verbose=True):
             print("File: {0}".format(entry.lstrip("/")))
             print("Value: {0}".format(corrected_vdb[entry]))
 
-        filesystem.add(
-            prefix + "/" + entry.lstrip("/"), corrected_vdb[entry], strip=vdb_path
-        )
+        try:
+            filesystem.add(
+                prefix + "/" + entry.lstrip("/"), corrected_vdb[entry], strip=vdb_path
+            )
+        except ValueError:
+            # Seems to happen if installed e.g. an executable-only package with an older
+            # version of Portage.
+            # https://bugs.gentoo.org/815493
+            print(
+                "??? Tried to write blank entry={0} for pkg={1}. Likely harmless. Skipping entry.".format(
+                    entry, pkg
+                )
+            )
 
     print(">>> Generated fixed VDB files for {0}".format(pkg))
     print()
