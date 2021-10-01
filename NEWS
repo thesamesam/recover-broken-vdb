@@ -1,3 +1,9 @@
+0.0.8 (2021-10-01)
+----
+- recover-broken-vdb-find-broken.sh: prefix initial message with # so emerge
+  invocation still works with the direct output of the tool
+- recover-broken-vdb-find-broken.sh: undo redundant "non-critical" change
+
 0.0.7 (2021-09-29)
 ----
 - recover-broken-vdb: don't create tmpdir unless necessary
