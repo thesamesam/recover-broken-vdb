@@ -17,7 +17,7 @@ test -n "${vdb_path}" || die "Could not determine vdb_path. Cannot continue."
 
 cd "${vdb_path}" || die "Could not chdir vdb_path (${vdb_path}). Cannot continue."
 
-echo "Checking installed packages for inconsistent VDB..."
+echo "# Checking installed packages for inconsistent VDB..."
 for A in */*/CONTENTS ; do
     CPV=$(echo "${A}" | cut -d/ -f1,2)
 
