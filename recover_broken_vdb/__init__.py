@@ -168,6 +168,10 @@ def find_corrupt_pkgs(vdb_path, deep=True, verbose=True):
         package.installs_any_shared_libs = False
         package.installs_any_dyn_executable = False
 
+        if not contents:
+            # We've already checked for virtuals and accounts...
+            print("!!! {0} has CONTENTS but installs nothing?".format(package.cpf))
+
         for line in contents:
             if not line:
                 continue
