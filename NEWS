@@ -1,4 +1,4 @@
-0.0.9 (2021-10-??)
+0.0.9 (2021-10-03)
 ----
 - recover-broken-find-broken.sh: revert change that caused false-negatives
   from 0.0.6.
