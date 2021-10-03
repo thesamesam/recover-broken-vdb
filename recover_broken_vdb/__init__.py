@@ -173,6 +173,7 @@ def find_corrupt_pkgs(vdb_path, deep=True, verbose=True):
                 continue
 
             installed_type, residue = line.split(" ", 1)
+
             # Discard anything other than 'obj'
             if installed_type != "obj":
                 continue
@@ -216,6 +217,7 @@ def find_corrupt_pkgs(vdb_path, deep=True, verbose=True):
                             package.cpf, installed_path
                         )
                     )
+
                 continue
 
             if (
@@ -237,6 +239,7 @@ def find_corrupt_pkgs(vdb_path, deep=True, verbose=True):
                 if match:
                     # If they installed a .so-like file, then let's warn about it.
                     # This isn't important if it's just dynamically linked executables.
+                    # TODO: just dump this part and use the more verbose explanation/output below?
                     print(
                         "!!! {0} installed a dynamic library (or dyn. linked executable) with no PROVIDES!".format(
                             package.cpf
@@ -251,6 +254,9 @@ def find_corrupt_pkgs(vdb_path, deep=True, verbose=True):
 
         # Now that we've iterated over all the files installed by this package,
         # we can apply a bit more filtering.
+        #
+        # (No point in printing the messages below unless --verbose because we've
+        # already told the user above that something is bad.)
         #
         # 1) If a package has both PROVIDES and NEEDED* (checked already)
         # => it is definitely safe
@@ -326,6 +332,7 @@ def find_corrupt_pkgs(vdb_path, deep=True, verbose=True):
             print(
                 "!!! Unexpected case, please report this as a bug with the following info:"
             )
+
             print("!!!  cpf: {0}".format(package))
 
             for key in ["NEEDED", "PROVIDES", "REQUIRES"]:
