@@ -506,8 +506,21 @@ def start():
         print(">>> Found {0} packages to fix".format(len(corrupt_pkgs)))
         print(">>> Writing to output directory: {0}".format(filesystem.root))
 
+        any_corrupt_libraries = False
+
         for package in corrupt_pkgs:
+            if not any_corrupt_libraries and package.installs_any_shared_libs:
+                any_corrupt_libraries = True
+
             fix_vdb(args.vdb, filesystem, package, args.verbose)
+
+        if not any_corrupt_libraries:
+            # Avoid folks having to rebuild everything (-e @world) if we only
+            # fixed executable-only packages (no libraries).
+            print(
+                ">>> No corrupt libraries found, so re-emerging the affected packages should be sufficient"
+            )
+            print(">>> i.e. likely no need to rebuild all of @world")
 
         print(">>> Written to output directory: {0}".format(filesystem.root))
     else:
