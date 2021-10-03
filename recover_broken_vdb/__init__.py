@@ -304,6 +304,23 @@ def find_corrupt_pkgs(vdb_path, deep=True, verbose=True):
                 )
 
             broken_packages.append(package)
+        elif (
+            not package.exists("PROVIDES")
+            and not package.exists("NEEDED")
+            and not package.exists("REQUIRES")
+        ):
+            # 5) None of the important files and we're installing at least one of
+            # shared libs or dynamically linked executables.
+            # => definitely broken!
+            #
+            if verbose:
+                print(
+                    ">>> Package {0} is broken: no PROVIDES, NEEDED, or REQUIRES".format(
+                        package.cpf
+                    )
+                )
+
+            broken_packages.append(package)
         else:
             # We've hit an unexpected case
             print(
