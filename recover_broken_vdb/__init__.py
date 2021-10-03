@@ -362,24 +362,6 @@ def fix_vdb(vdb_path, filesystem, package, verbose=True):
     Inspired by lib/portage/tests/util/dyn_libs/test_soname_deps.py
     """
 
-    # Check whether any of the installed paths look .so-like
-    any_so = (
-        len([path for path in package.dyn_paths if re.match(".*\.so($|\..*)", path)])
-        > 0
-    )
-
-    if package.exists("NEEDED"):
-        # If we're installing any .so-like files, it's mildly
-        # noteworthy if we have NEEDED but not PROVIDES.
-        if any_so:
-            if verbose:
-                print(">>> NEEDED exists but no PROVIDES for {0}".format(package))
-        else:
-            # If NEEDED exists and we're just dynamically linked executables
-            # (like sys-apps/sed), there's no point in carrying on either.
-            # But so common that it's not even worth logging about.
-            return
-
     corrected_vdb = {}
 
     print(">>> Fixing VDB for {0}".format(package))
@@ -437,7 +419,7 @@ def fix_vdb(vdb_path, filesystem, package, verbose=True):
             # (It's fine if we didn't install any .sos, because pkg w/ just dynamically linked executables
             # usually won't have a PROIVDES, unless FEATURES=splitdebug)
             if not corrected_vdb[entry]:
-                if any_so:
+                if package.installs_any_shared_libs:
                     raise RuntimeError(
                         "!!! {0} installed dynamic libraries(?) but no PROVIDES generated!".format(
                             package
