@@ -374,11 +374,11 @@ def fix_vdb(vdb_path, filesystem, package, verbose=True):
         if any_so:
             if verbose:
                 print(">>> NEEDED exists but no PROVIDES for {0}".format(package))
-
-        # If NEEDED exists and we're just dynamically linked executables
-        # (like sys-apps/sed), there's no point in carrying on either.
-        # But so common that it's not even worth logging about.
-        return
+        else:
+            # If NEEDED exists and we're just dynamically linked executables
+            # (like sys-apps/sed), there's no point in carrying on either.
+            # But so common that it's not even worth logging about.
+            return
 
     corrected_vdb = {}
 
