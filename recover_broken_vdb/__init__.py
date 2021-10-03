@@ -106,6 +106,7 @@ class ModelFileSystem:
 
 def find_corrupt_pkgs(vdb_path, deep=True, verbose=True):
     broken_packages = []
+    unexpected_case_found = False
 
     # Generate a list of paths to check in the VDB
     path = pathlib.Path(vdb_path)
@@ -146,6 +147,9 @@ def find_corrupt_pkgs(vdb_path, deep=True, verbose=True):
         contents_lines = contents.read_text().split("\n")
 
         broken_package = None
+        installs_any_shared_libs = False
+        installs_any_dyn_executable = False
+
         for line in contents_lines:
             if not line:
                 continue
@@ -196,10 +200,15 @@ def find_corrupt_pkgs(vdb_path, deep=True, verbose=True):
                     )
                 continue
 
+            if "executable" in file_exec_result and not installs_any_dyn_executable:
+                installs_any_dyn_executable = True
+
+            if "shared object" in file_exec_result and not installs_any_shared_libs:
+                installs_any_shared_libs = True
+
             # Don't spam about the same broken package repeatedly
             if not broken_package:
                 broken_package = BrokenPackage(cpf)
-                broken_packages.append(broken_package)
                 if match:
                     # If they installed a .so-like file, then let's warn about it.
                     # This isn't important if it's just dynamically linked executables.
@@ -214,7 +223,74 @@ def find_corrupt_pkgs(vdb_path, deep=True, verbose=True):
             if broken_package:
                 broken_package.contents.append(installed_path)
 
-    return broken_packages
+        # Now that we've iterated over all the files installed by this package,
+        # we can apply a bit more filtering.
+        #
+        # 1) If a package has both PROVIDES and NEEDED* (checked already)
+        # => it is definitely safe
+        #
+        # NOTE: We've already checked for "PROVIDES _and_ NEEDED" at the beginning of the function
+
+        # 2) If a package has zero executables or shared libs
+        # => it probably has neither PROVIDES or NEEDED*, but in any case we don't care about it
+        #
+        if not installs_any_dyn_executable and not installs_any_shared_libs:
+            if verbose:
+                print(
+                    ">>> Package {0} is fine: not installing any dyn. linked executables or shared libs".format(
+                        cpf
+                    )
+                )
+            continue
+
+        # 3) If a package has NEEDED* but no PROVIDES
+        # => it is safe only if it has zero shared libs
+        #
+        if (full_path / "NEEDED").exists() and not (full_path / "PROVIDES").exists():
+            if installs_any_shared_libs:
+                if verbose:
+                    print(
+                        ">>> Package {0} is broken: NEEDED but no PROVIDES and we install shared libs".format(
+                            cpf
+                        )
+                    )
+
+                broken_packages.append(broken_package)
+            else:
+                if verbose:
+                    print(
+                        ">>> Package {0} is fine: NEEDED exists but no PROVIDES and no shared libs".format(
+                            cpf
+                        )
+                    )
+        elif (full_path / "PROVIDES").exists() and not (full_path / "NEEDED"):
+            # 4) If a package has PROVIDES but no NEEDED*
+            # => it is definitely broken (for some value of definitely)
+            #
+            if verbose:
+                print(">>> Package {0} is broken: PROVIDES but no NEEDED".format(cpf))
+            broken_packages.append(broken_package)
+        else:
+            # We've hit an unexpected case
+            print(
+                "!!! Unexpected case, please report this as a bug with the following info:"
+            )
+            print("!!!  cpf: {0}".format(cpf))
+            print("!!!  NEEDED exists: {0}".format((full_path / "NEEDED").exists()))
+            print("!!!  PROVIDES exists: {0}".format((full_path / "PROVIDES").exists()))
+            print("!!!  REQUIRES exists: {0}".format((full_path / "REQUIRES").exists()))
+            print(
+                "!!!  installs_any_dyn_executable: {0}".format(
+                    installs_any_dyn_executable
+                )
+            )
+            print("!!!  installs_any_shared_libs: {0}".format(installs_any_shared_libs))
+            print("!!!  deep: {0}".format(deep))
+
+            if not unexpected_case_found:
+                unexpected_case_found = True
+
+    return broken_packages, unexpected_case_found
 
 
 def fix_vdb(vdb_path, filesystem, pkg, verbose=True):
@@ -365,7 +441,13 @@ def start():
     if args.deep:
         print("!!! Running with --deep may significantly increase runtime. Be patient!")
 
-    corrupt_pkgs = find_corrupt_pkgs(args.vdb, args.deep, args.verbose)
+    corrupt_pkgs, unexpected_case_found = find_corrupt_pkgs(
+        args.vdb, args.deep, args.verbose
+    )
+
+    if unexpected_case_found:
+        print("!!! Aborting due to unexpected case(s) found")
+        sys.exit(1)
 
     if corrupt_pkgs:
         filesystem = ModelFileSystem(args.output)
