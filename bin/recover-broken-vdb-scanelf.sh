@@ -3,12 +3,12 @@
 output=${1}
 # We rather inefficiently invoke scanelf repeatedly for each file for now
 # to avoid having to extract the binpkg to a separate location
-files=${@:2}
+shift
 
 mkdir -p ${output}/build-info
 
 # Nabbed from Portage's bin/misc-functions.sh (install_qa_check)
-scanelf -yRBF '%a;%p;%S;%r;%n' ${files} | { while IFS= read -r l; do
+scanelf -yRBF '%a;%p;%S;%r;%n' "${@}" | { while IFS= read -r l; do
         arch=${l%%;*}; l=${l#*;}
         obj="${l%%;*}"; l=${l#*;}
         soname=${l%%;*}; l=${l#*;}
