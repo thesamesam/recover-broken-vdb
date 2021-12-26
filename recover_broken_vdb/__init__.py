@@ -383,9 +383,7 @@ def fix_vdb(vdb_path, filesystem, package, verbose=True):
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = pathlib.Path(tmpdir)
 
-        contents = " ".join(package.dyn_paths)
-
-        subprocess.run(["recover-broken-vdb-scanelf.sh", tmpdir, contents])
+        subprocess.run(["recover-broken-vdb-scanelf.sh", tmpdir] + package.dyn_paths)
 
         if not (tmpdir_path / "build-info" / "NEEDED").exists():
             # Not an interesting binary.
