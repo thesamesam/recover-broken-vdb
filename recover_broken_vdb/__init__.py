@@ -361,6 +361,11 @@ def find_corrupt_pkgs(vdb_path, deep=True, verbose=True):
     return broken_packages, unexpected_case_found
 
 
+def chunk_list(lst, n):
+    for i in range(0, len(lst), n):
+        yield lst[i : i + n]
+
+
 def fix_vdb(vdb_path, filesystem, package, verbose=True):
     """
     Creates PROVIDES, REQUIRES, NEEDED, and NEEDED.ELF.2 for a package in
@@ -383,7 +388,8 @@ def fix_vdb(vdb_path, filesystem, package, verbose=True):
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = pathlib.Path(tmpdir)
 
-        subprocess.run(["recover-broken-vdb-scanelf.sh", tmpdir] + package.dyn_paths)
+        for chunk in chunk_list(package.dyn_paths, 1000):
+            subprocess.run(["recover-broken-vdb-scanelf.sh", tmpdir] + chunk)
 
         if not (tmpdir_path / "build-info" / "NEEDED").exists():
             # Not an interesting binary.
