@@ -209,7 +209,16 @@ def find_corrupt_pkgs(vdb_path, deep=True, verbose=True):
             file_exec = subprocess.run(
                 ["file", "-b", installed_path], stdout=subprocess.PIPE
             )
-            file_exec_result = file_exec.stdout.decode("utf-8")
+
+            try:
+                file_exec_result = file_exec.stdout.decode("utf-8")
+            except UnicodeDecodeError:
+                # It should be reasonable to skip in situations like this as it's clearly
+                # not going to be a dynamically linked ELF like we're expecting.
+                # https://github.com/thesamesam/recover-broken-vdb/issues/6
+                print(
+                    "Hit a UnicodeDecodeError on {0}, skipping.".format(installed_path)
+                )
 
             if (
                 "ELF" not in file_exec_result
