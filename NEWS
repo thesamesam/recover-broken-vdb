@@ -1,3 +1,14 @@
+1.0.0 (2021-12-27)
+----
+- recover-broken-vdb-find-broken.sh: pass files as separate arguments to
+  avoid failure on long list of files (thanks floppym;
+  see https://bugs.gentoo.org/830004).
+- recover-broken-vdb: chunk input to scanelf wrapper to avoid failure on
+  long list of files (thanks floppym; see https://bugs.gentoo.org/830004).
+- recover-broken-vdb: skip file if file(1) returns undecodable Unicode;
+  it's unlikely to be a file meaningful to us (see commit message for details;
+  fixes https://github.com/thesamesam/recover-broken-vdb/issues/6).
+
 0.0.9 (2021-10-03)
 ----
 - recover-broken-find-broken.sh: revert change that caused false-negatives
